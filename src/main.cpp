@@ -86,8 +86,10 @@ unsigned long lastEye = 0;
 unsigned long lastWaist = 0;
 unsigned long lastRightArm = 0;
 
-int waist = 90, minWaist = 90 - 20, maxWaist = 90 + 20;
-int rightArm = 90, minRightArm = 90 - 20, maxRightArm = 90 + 20;
+int waist = 90, minWaist = 90 - 20, maxWaist = 90 + 60;
+bool dirWaist = true;
+int rightArm = 90, minRightArm = 90 - 10, maxRightArm = 90 + 60;
+bool dirRightArm = true;
 
 void loop() {
 #ifdef USE_SOUND
@@ -107,23 +109,31 @@ void loop() {
     lastEye = now;
   }
 
-  if (now - lastWaist > 100) {
-    waist = (waist + 1);
+  if (now - lastWaist > 30) {
+    waist = (waist + (dirWaist ? 1 : -1));
     waist = max(waist, minWaist);
     waist = min(waist, maxWaist);
+    if (waist == minWaist)
+      dirWaist = true;
+    if (waist == maxWaist)
+      dirWaist = false;
     servoWaist.write(waist);
     lastWaist = now;
   }
 
-  if (now - lastRightArm > 100) {
-    rightArm = (rightArm + 1);
+  if (now - lastRightArm > 30) {
+    rightArm = (rightArm + (dirRightArm ? 1 : -1));
     rightArm = max(rightArm, minRightArm);
     rightArm = min(rightArm, maxRightArm);
+    if (rightArm == minRightArm)
+      dirRightArm = true;
+    if (rightArm == maxRightArm)
+      dirRightArm = false;
     servoRightArm.write(rightArm);
     lastRightArm = now;
   }
 
-  delay(10);
+  delay(5);
 }
 
 #ifdef USE_SOUND
