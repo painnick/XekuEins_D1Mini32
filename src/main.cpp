@@ -27,8 +27,8 @@
 #define PIN_TX 17 // TX2
 #endif
 
-#define PIN_WAIST 21
-#define PIN_RIGHT_ARM 22
+#define PIN_WAIST 22
+#define PIN_RIGHT_ARM 21
 
 #define PIN_BLUE 25 // Fixed
 #define PIN_EYE 27 // Fixed
@@ -83,6 +83,11 @@ bool eyeOn = true;
 
 unsigned long lastBlue = 0;
 unsigned long lastEye = 0;
+unsigned long lastWaist = 0;
+unsigned long lastRightArm = 0;
+
+int waist = 90, minWaist = 90 - 20, maxWaist = 90 + 20;
+int rightArm = 90, minRightArm = 90 - 20, maxRightArm = 90 + 20;
 
 void loop() {
 #ifdef USE_SOUND
@@ -100,6 +105,22 @@ void loop() {
     digitalWrite(PIN_EYE, eyeOn ? LOW : HIGH);
     eyeOn = !eyeOn;
     lastEye = now;
+  }
+
+  if (now - lastWaist > 100) {
+    waist = (waist + 1);
+    waist = max(waist, minWaist);
+    waist = min(waist, maxWaist);
+    servoWaist.write(waist);
+    lastWaist = now;
+  }
+
+  if (now - lastRightArm > 100) {
+    rightArm = (rightArm + 1);
+    rightArm = max(rightArm, minRightArm);
+    rightArm = min(rightArm, maxRightArm);
+    servoRightArm.write(rightArm);
+    lastRightArm = now;
   }
 
   delay(10);
