@@ -13,6 +13,8 @@
 #include "DFMiniMp3.h"
 #endif
 
+#include "scene1.h"
+
 #define MAIN_TAG "Main"
 
 // These are all GPIO pins on the ESP32
@@ -27,17 +29,17 @@
 #define PIN_TX 17 // TX2
 #endif
 
-#define PIN_WAIST 22
-#define PIN_RIGHT_ARM 21
+#define PIN_WAIST 21
+#define PIN_ARM 22
 
-#define PIN_BLUE 25 // Fixed
 #define PIN_EYE 27 // Fixed
+#define PIN_BLUE 25 // Fixed
 #define PIN_GUN 32
 
 #define CHANNEL_BLUE 12
 
 Servo servoWaist;
-Servo servoRightArm;
+Servo servoArm;
 
 #ifdef USE_SOUND
 class Mp3Notify;
@@ -47,14 +49,14 @@ DfMp3 dfmp3(mySerial);
 int volume = MAX_VOLUME; // 0~30
 #endif
 
+Scene1 scene1(PIN_EYE, CHANNEL_BLUE, PIN_GUN, &servoWaist, &servoArm);
+
 void setup() {
-  WRITE_PERI_REG(RTC_CNTL_BROWN_OUT_REG, 0); //disable brownout detector
+  // WRITE_PERI_REG(RTC_CNTL_BROWN_OUT_REG, 0); //disable brownout detector
   Serial.begin(115200);
 
   servoWaist.attach(PIN_WAIST);
-  servoWaist.write(90);
-  servoRightArm.attach(PIN_RIGHT_ARM);
-  servoRightArm.write(90);
+  servoArm.attach(PIN_ARM);
 
   pinMode(PIN_BLUE, OUTPUT);
   pinMode(PIN_EYE, OUTPUT);
@@ -62,10 +64,7 @@ void setup() {
 
   ledcSetup(CHANNEL_BLUE, 1000, 8);
   ledcAttachPin(PIN_BLUE, CHANNEL_BLUE);
-  ledcWrite(CHANNEL_BLUE, 128);
-
-  digitalWrite(PIN_EYE, HIGH);
-  digitalWrite(PIN_GUN, HIGH);
+  // ledcWrite(CHANNEL_BLUE, 128);
 
 #ifdef USE_SOUND
   dfmp3.begin(9600, 1000);
@@ -79,62 +78,11 @@ void setup() {
 #endif
 }
 
-bool eyeOn = true;
-
-unsigned long lastBlue = 0;
-unsigned long lastEye = 0;
-unsigned long lastWaist = 0;
-unsigned long lastRightArm = 0;
-
-int waist = 90, minWaist = 90 - 20, maxWaist = 90 + 60;
-bool dirWaist = true;
-int rightArm = 90, minRightArm = 90 - 10, maxRightArm = 90 + 60;
-bool dirRightArm = true;
-
 void loop() {
-#ifdef USE_SOUND
-  dfmp3.loop();
-#endif
-
-  unsigned long now = millis();
-
-  if (now - lastBlue > 100) {
-    ledcWrite(CHANNEL_BLUE, 32 + random() % 96);
-    lastBlue = now;
-  }
-
-  if (now - lastEye > 2000) {
-    digitalWrite(PIN_EYE, eyeOn ? LOW : HIGH);
-    eyeOn = !eyeOn;
-    lastEye = now;
-  }
-
-  if (now - lastWaist > 30) {
-    waist = (waist + (dirWaist ? 1 : -1));
-    waist = max(waist, minWaist);
-    waist = min(waist, maxWaist);
-    if (waist == minWaist)
-      dirWaist = true;
-    if (waist == maxWaist)
-      dirWaist = false;
-    servoWaist.write(waist);
-    lastWaist = now;
-  }
-
-  if (now - lastRightArm > 30) {
-    rightArm = (rightArm + (dirRightArm ? 1 : -1));
-    rightArm = max(rightArm, minRightArm);
-    rightArm = min(rightArm, maxRightArm);
-    if (rightArm == minRightArm)
-      dirRightArm = true;
-    if (rightArm == maxRightArm)
-      dirRightArm = false;
-    servoRightArm.write(rightArm);
-    lastRightArm = now;
-  }
-
-  delay(5);
+  scene1.run();
+  delay(1000 * 15);
 }
+
 
 #ifdef USE_SOUND
 //----------------------------------------------------------------------------------
